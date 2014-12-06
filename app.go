@@ -2,13 +2,9 @@ package ideat
 
 import (
 	"codemo/models"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/ngerakines/ginpongo2"
-	"go/ast"
-	"go/parser"
-	"go/token"
 )
 
 type App struct {
@@ -40,9 +36,9 @@ func (a *App) Init() error {
 
 		c.BindWith(&form, binding.Form)
 
-		f, err := parseSrc(form.Source)
+		f, err := models.ParseSrc(form.Source)
 		if err != nil {
-			c.JSON(500, err)
+			c.JSON(500, err.Error())
 			return
 		}
 
@@ -52,13 +48,3 @@ func (a *App) Init() error {
 
 	return nil
 }
-
-func parseSrc(src string) (f *ast.File, err error) {
-	fset := token.NewFileSet()
-
-	fullSrc := fmt.Sprintf("package codemotst\n func main() {\n %s \n }", src)
-	fmt.Println(fullSrc)
-	return parser.ParseFile(fset, "", fullSrc, 0)
-}
-
-func convertAst(f *ast.File)
