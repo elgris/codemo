@@ -23,12 +23,11 @@ type (
 	}
 
 	baseNode struct {
-		Node
-		NodeType string `json:"type,omitempty"`
+		NodeType string `json:"type"`
 	}
 
 	baseExpr struct {
-		Expr
+		baseNode
 	}
 
 	Block struct {
@@ -81,6 +80,18 @@ type (
 		Items []Expr `json:"items"`
 	}
 )
+
+func newBlock() *Block           { return &Block{baseNode: baseNode{NodeType: "block"}} }
+func newAssignment() *Assignment { return &Assignment{baseNode: baseNode{NodeType: "assignment"}} }
+func newLoop() *Loop             { return &Loop{baseNode: baseNode{NodeType: "loop"}} }
+func newLoopRange() *LoopRange   { return &LoopRange{baseNode: baseNode{NodeType: "loopRange"}} }
+func newCond() *Cond             { return &Cond{baseNode: baseNode{NodeType: "cond"}} }
+
+func newArithm() *Arithm { return &Arithm{baseExpr: baseExpr{baseNode: baseNode{NodeType: "arithm"}}} }
+func newCall() *Call     { return &Call{baseExpr: baseExpr{baseNode: baseNode{NodeType: "call"}}} }
+func newConst() *Const   { return &Const{baseExpr: baseExpr{baseNode: baseNode{NodeType: "const"}}} }
+func newVar() *Var       { return &Var{baseExpr: baseExpr{baseNode: baseNode{NodeType: "var"}}} }
+func newArray() *Array   { return &Array{baseExpr: baseExpr{baseNode: baseNode{NodeType: "array"}}} }
 
 func (n *baseNode) Type() string { return n.NodeType }
 
@@ -143,7 +154,7 @@ func parseStmt(stmt ast.Stmt) (Node, error) {
 }
 
 func parseBlock(block *ast.BlockStmt) (node *Block, err error) {
-	node = &Block{}
+	node = newBlock()
 	var parsedStmt Node
 
 	for _, stmt := range block.List {
@@ -161,7 +172,7 @@ func parseAssign(stmt *ast.AssignStmt) (node *Assignment, err error) {
 	if len(stmt.Lhs) != 1 || len(stmt.Rhs) != 1 {
 		return nil, errors.New("right now we can process assignments with only 1 receiver")
 	}
-	node = &Assignment{}
+	node = newAssignment()
 
 	node.Left, err = parseExpr(stmt.Lhs[0])
 	if err != nil {
@@ -177,12 +188,12 @@ func parseAssign(stmt *ast.AssignStmt) (node *Assignment, err error) {
 func parseExpr(expr ast.Expr) (Expr, error) {
 	switch expr.(type) {
 	case *ast.BasicLit:
-		i := &Const{}
+		i := newConst()
 		i.Value = expr.(*ast.BasicLit).Value
 
 		return i, nil
 	case *ast.Ident:
-		i := &Var{}
+		i := newVar()
 		i.Name = expr.(*ast.Ident).Name
 
 		return i, nil
@@ -220,7 +231,7 @@ func parseCall(expr *ast.CallExpr) (c *Call, err error) {
 		return nil, errors.New(fmt.Sprintf("only simple function calls are accepted. Given: %#v", expr.Fun))
 	}
 
-	c = &Call{}
+	c = newCall()
 	c.Func = fIdent.Name
 	c.Args, err = parseExprs(expr.Args)
 
@@ -241,7 +252,7 @@ func parseComposite(expr *ast.CompositeLit) (c *Array, err error) {
 		return nil, errors.New(fmt.Sprintf("from composite types we process only arrays. Given: %#v", expr.Type))
 	}
 
-	c = &Array{}
+	c = newArray()
 	c.Items = make([]Expr, len(expr.Elts))
 
 	for i, e := range expr.Elts {
