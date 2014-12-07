@@ -15,9 +15,10 @@ angular.module("myapp", []).controller("CodeFormController", function($scope, $h
             })
             .success(function(data) {
                 console.log(data);
-                $scope.successMessage = data
-                // TODO draw data
-                    // TODO: hide loader
+
+                clearGraph();
+                drawItem(newPoint(0,0), data)
+                // TODO: hide loader
             })
             .error(function(data, status, headers, config) {
                 $scope.errorMessage = "HTTP error code: " + status
